@@ -73,8 +73,12 @@ void modbusLoop()
     // ===== SYSTEM SERVICE (Unit 100) =====
     //
 
+    //--------------------------------------------------
+    // Battery
+    //--------------------------------------------------
+
     if (readHoldingRegister(Victron::Unit::SYSTEM, 840, raw))
-        victron.batteryVoltage = raw / 100.0f;
+        victron.batteryVoltage = raw / 10.0f;
     else
         ok = false;
 
@@ -93,6 +97,38 @@ void modbusLoop()
     else
         ok = false;
 
+    //--------------------------------------------------
+    // AC
+    //--------------------------------------------------
+
+    if (readHoldingRegister(Victron::Unit::SYSTEM, 817, raw))
+        victron.acConsumptionL1 = raw;
+    else
+        ok = false;
+
+    if (readHoldingRegister(Victron::Unit::SYSTEM, 820, raw))
+        victron.gridPowerL1 = (int16_t)raw;
+    else
+        ok = false;
+
+    //--------------------------------------------------
+    // PV
+    //--------------------------------------------------
+
+    if (readHoldingRegister(Victron::Unit::SYSTEM, 850, raw))
+        victron.pvAcOutputL1 = raw;
+    else
+        ok = false;
+
+    //--------------------------------------------------
+    // Charger
+    //--------------------------------------------------
+
+    if (readHoldingRegister(Victron::Unit::SYSTEM, 855, raw))
+        victron.chargerPower = raw;
+    else
+        ok = false;
+
     victron.online = ok;
 
     if (!ok)
@@ -102,21 +138,35 @@ void modbusLoop()
     }
 
     Serial.println();
-    Serial.println("==============================");
-    Serial.println("     VICTRON SYSTEM DATA");
-    Serial.println("==============================");
+    Serial.println("=========================================");
+    Serial.println("          VICTRON SYSTEM DATA");
+    Serial.println("=========================================");
 
-    Serial.printf("Battery Voltage : %.2f V\n",
+    Serial.printf("Battery Voltage : %.1f V\n",
                   victron.batteryVoltage);
 
     Serial.printf("Battery Current : %.1f A\n",
                   victron.batteryCurrent);
 
-    Serial.printf("Battery Power   : %.0f W\n",
+    Serial.printf("Battery Power   : %d W\n",
                   victron.batteryPower);
 
-    Serial.printf("Battery SOC     : %.1f %%\n",
+    Serial.printf("Battery SOC     : %.0f %%\n",
                   victron.batterySOC);
+
+    Serial.println();
+
+    Serial.printf("Grid Power      : %d W\n",
+                  victron.gridPowerL1);
+
+    Serial.printf("AC Consumption  : %u W\n",
+                  victron.acConsumptionL1);
+
+    Serial.printf("PV DC Power     : %u W\n",
+                  victron.pvAcOutputL1);
+
+    Serial.printf("Charger Power   : %u W\n",
+                  victron.chargerPower);
 
     Serial.println();
 }

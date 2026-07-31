@@ -10,24 +10,31 @@ static bool firstScan = true;
 
 namespace
 {
-    constexpr uint16_t START_REGISTER = 840;
-    constexpr uint16_t END_REGISTER   = 980;
+    constexpr uint16_t START_REGISTER = 800;
+    constexpr uint16_t END_REGISTER   = 1100;
 
     constexpr bool SHOW_ZERO = true;
 
-    bool scanComplete = false;
+    bool scanRequested = false;
     unsigned long startDelay = 0;
 }
 
 void registerScannerBegin()
 {
-    scanComplete = false;
+    // Automatically perform one scan after boot
+    scanRequested = true;
+    startDelay = millis();
+}
+
+void registerScannerStart()
+{
+    scanRequested = true;
     startDelay = millis();
 }
 
 void registerScannerLoop()
 {
-    if (scanComplete)
+    if (!scanRequested)
         return;
 
     if (!modbusConnected())
@@ -113,5 +120,17 @@ void registerScannerLoop()
     Serial.println();
 
     firstScan = false;
-    scanComplete = true;
+    scanRequested = false;
+
+    Serial.println("======================================");
+    Serial.println("Scan finished.");
+    Serial.println("Copy the output now.");
+    Serial.println("Press the ESP32 RESET button to scan again.");
+    Serial.println("======================================");
+
+    // Temporary debugging pause
+    while (true)
+    {
+        delay(1000);
+    }
 }

@@ -3,6 +3,7 @@
 #include <Arduino.h>
 
 #include "config.h"
+#include "register_scanner.h"
 
 void serialCommandsBegin()
 {
@@ -30,42 +31,26 @@ void serialCommandsLoop()
         Serial.println("help");
         Serial.println("version");
         Serial.println("scan");
-        Serial.println("compare");
-        Serial.println("watch");
         Serial.println();
         return;
     }
 
     if (cmd == "version")
     {
-        Serial.println();
-        Serial.println(PROJECT_NAME);
-        Serial.println(PROJECT_VERSION);
-        Serial.println();
+        Serial.printf("\n%s v%s\n\n",
+                      PROJECT_NAME,
+                      PROJECT_VERSION);
         return;
     }
 
     if (cmd == "scan")
     {
-        Serial.println();
-        Serial.println("Scan requested.");
-        Serial.println();
-        return;
-    }
+        registerScannerStart();
 
-    if (cmd == "compare")
-    {
         Serial.println();
-        Serial.println("Compare requested.");
+        Serial.println("Starting register scan...");
         Serial.println();
-        return;
-    }
 
-    if (cmd == "watch")
-    {
-        Serial.println();
-        Serial.println("Watch mode requested.");
-        Serial.println();
         return;
     }
 
