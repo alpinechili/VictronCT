@@ -6,6 +6,7 @@
 #include "modbus_manager.h"
 #include "register_scanner.h"
 #include "ct_manager.h"
+#include "serial_commands.h"
 
 void setup()
 {
@@ -16,6 +17,8 @@ void setup()
     Serial.printf("%s\n", PROJECT_NAME);
     Serial.printf("Version : %s\n", PROJECT_VERSION);
     Serial.println("======================================");
+
+    serialCommandsBegin();
 
     wifiBegin();
 
@@ -34,6 +37,8 @@ void setup()
 
 void loop()
 {
+    serialCommandsLoop();
+
     wifiLoop();
 
     if (ENABLE_MQTT)
