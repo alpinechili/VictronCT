@@ -1,0 +1,23 @@
+#pragma once
+
+#include <stdint.h>
+#include "victron_registers.h"
+
+bool modbusBegin();
+void modbusLoop();
+bool modbusConnected();
+
+bool readHoldingRegister(uint8_t unitId,
+                         uint16_t address,
+                         uint16_t& value);
+
+bool readHoldingRegisters(uint8_t unitId,
+                          uint16_t startAddress,
+                          uint16_t count,
+                          uint16_t* values);
+
+
+
+bool readRegister(uint8_t unitId,
+                  const Victron::RegisterInfo& reg,
+                  float& value);
