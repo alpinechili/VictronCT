@@ -6,10 +6,6 @@
 
 An ESP32 firmware for monitoring and extending a Victron Cerbo GX using Modbus TCP and MQTT.
 
-# VictronCT
-
-**An ESP32 firmware for monitoring and extending a Victron Cerbo GX using Modbus TCP and MQTT.**
-
 ---
 
 ## Features
