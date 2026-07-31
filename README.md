@@ -1,3 +1,11 @@
+<p align="center">
+  <img src="docs/images/banner.png" alt="VictronCT Banner" width="100%">
+</p>
+
+# VictronCT
+
+An ESP32 firmware for monitoring and extending a Victron Cerbo GX using Modbus TCP and MQTT.
+
 # VictronCT
 
 **An ESP32 firmware for monitoring and extending a Victron Cerbo GX using Modbus TCP and MQTT.**
