@@ -4,6 +4,7 @@
 
 #include "wifi_manager.h"
 #include "mqtt_manager.h"
+#include "modbus_manager.h"
 #include "secrets.h"
 
 WiFiClient wifiClient;
@@ -15,10 +16,84 @@ PubSubClient mqttClient(wifiClient);
 
 static const char* TOPIC_STATUS    = "VictronCT/status";
 static const char* TOPIC_HEARTBEAT = "VictronCT/heartbeat";
+static const char* TOPIC_WRITE     = "VictronCT/write/#";
 
 //------------------------------------------------------
 
 unsigned long lastHeartbeat = 0;
+
+//------------------------------------------------------
+// MQTT Callback
+//------------------------------------------------------
+
+static void mqttCallback(
+    char* topic,
+    byte* payload,
+    unsigned int length)
+{
+    String topicString = topic;
+
+    if (!topicString.startsWith("VictronCT/write/"))
+        return;
+
+    String path = topicString.substring(
+        strlen("VictronCT/write/"));
+
+    int separator = path.indexOf('/');
+
+    if (separator < 0)
+        return;
+
+    uint8_t unit =
+        path.substring(0, separator).toInt();
+
+    uint16_t reg =
+        path.substring(separator + 1).toInt();
+
+    char valueBuffer[32];
+
+    if (length >= sizeof(valueBuffer))
+        return;
+
+    memcpy(
+        valueBuffer,
+        payload,
+        length);
+
+    valueBuffer[length] = 0;
+
+    uint16_t value =
+        atoi(valueBuffer);
+
+    Serial.println();
+    Serial.println("MQTT WRITE REQUEST");
+
+    Serial.printf(
+        "Unit     : %u\n",
+        unit);
+
+    Serial.printf(
+        "Register : %u\n",
+        reg);
+
+    Serial.printf(
+        "Value    : %u\n",
+        value);
+
+    if (writeHoldingRegister(
+            unit,
+            reg,
+            value))
+    {
+        Serial.println("Write OK");
+    }
+    else
+    {
+        Serial.println("Write FAILED");
+    }
+
+    Serial.println();
+}
 
 //------------------------------------------------------
 
@@ -27,6 +102,9 @@ bool mqttBegin()
     mqttClient.setServer(
         SECRET_MQTT_SERVER,
         SECRET_MQTT_PORT);
+
+    mqttClient.setCallback(
+        mqttCallback);
 
     return true;
 }
@@ -59,6 +137,9 @@ void mqttLoop()
                 TOPIC_STATUS,
                 "online",
                 true);
+
+            mqttClient.subscribe(
+                TOPIC_WRITE);
 
             lastHeartbeat = millis();
         }
