@@ -47,18 +47,14 @@ struct DeveloperRegister
     uint8_t unit;
     uint16_t address;
 
-    // Friendly name
     const char* name;
 
-    // MQTT topic (nullptr = register only)
     const char* mqttTopic;
 
-    // Scaling
     float scale;
 
     RegisterType type;
 
-    // Home Assistant
     const char* units;
     uint8_t decimals;
 
@@ -70,6 +66,9 @@ struct DeveloperRegister
 
     // Auto poll
     bool autoPoll;
+
+    // Writable Modbus register
+    bool writable;
 };
 
 const DeveloperRegister* findDeveloperRegister(
