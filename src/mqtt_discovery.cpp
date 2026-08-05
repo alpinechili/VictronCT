@@ -39,7 +39,7 @@ static const char* stateClassToString(HAStateClass c)
         case HAStateClass::Measurement:     return "measurement";
         case HAStateClass::Total:           return "total";
         case HAStateClass::TotalIncreasing: return "total_increasing";
-        default:                            return nullptr;
+        default:                            return "measurement";
     }
 }
 
@@ -57,9 +57,6 @@ void mqttDiscoveryPublishRegister(
     uint16_t reg,
     const DeveloperRegister* info)
 {
-    if (!info)
-        return;
-
     for (uint16_t i = 0; i < MAX_DISCOVERY; i++)
     {
         if (published[i].published &&
@@ -81,18 +78,55 @@ void mqttDiscoveryPublishRegister(
         }
     }
 
+    //--------------------------------------------------
+    // Defaults for unknown registers
+    //--------------------------------------------------
+
+    const char* name = nullptr;
+    const char* units = "";
+    const char* icon = "mdi:chip";
+    const char* deviceClass = nullptr;
+    const char* stateClass = "measurement";
+    uint8_t decimals = 0;
+
+    char unknownName[32];
+
+    if (info)
+    {
+        name = info->name;
+        units = info->units;
+        icon = info->icon;
+        decimals = info->decimals;
+
+        deviceClass = deviceClassToString(info->deviceClass);
+        stateClass = stateClassToString(info->stateClass);
+    }
+    else
+    {
+        snprintf(
+            unknownName,
+            sizeof(unknownName),
+            "Register %u",
+            reg);
+
+        name = unknownName;
+    }
+
+    //--------------------------------------------------
+
     char topic[128];
 
-    snprintf(topic,
-             sizeof(topic),
-             "homeassistant/sensor/victronct_%u_%u/config",
-             unit,
-             reg);
+    snprintf(
+        topic,
+        sizeof(topic),
+        "homeassistant/sensor/victronct_%u_%u/config",
+        unit,
+        reg);
 
     String json = "{";
 
     json += "\"name\":\"";
-    json += info->name;
+    json += name;
     json += "\",";
 
     json += "\"unique_id\":\"victronct_";
@@ -107,36 +141,36 @@ void mqttDiscoveryPublishRegister(
     json += reg;
     json += "\",";
 
-    if (strlen(info->units))
+    if (strlen(units))
     {
         json += "\"unit_of_measurement\":\"";
-        json += info->units;
+        json += units;
         json += "\",";
     }
 
-    if (const char* dc = deviceClassToString(info->deviceClass))
+    if (deviceClass)
     {
         json += "\"device_class\":\"";
-        json += dc;
+        json += deviceClass;
         json += "\",";
     }
 
-    if (const char* sc = stateClassToString(info->stateClass))
+    if (stateClass)
     {
         json += "\"state_class\":\"";
-        json += sc;
+        json += stateClass;
         json += "\",";
     }
 
-    if (strlen(info->icon))
+    if (strlen(icon))
     {
         json += "\"icon\":\"";
-        json += info->icon;
+        json += icon;
         json += "\",";
     }
 
     json += "\"suggested_display_precision\":";
-    json += info->decimals;
+    json += decimals;
     json += ",";
 
     json += "\"availability_topic\":\"VictronCT/status\",";
