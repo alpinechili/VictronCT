@@ -6,14 +6,15 @@
 #include "modbus_manager.h"
 
 static uint16_t previousValues[1000];
+static bool validRegister[1000];
 static bool firstScan = true;
 
 namespace
 {
-    constexpr uint16_t START_REGISTER = 800;
-    constexpr uint16_t END_REGISTER   = 1100;
+    constexpr uint16_t START_REGISTER = 0;
+    constexpr uint16_t END_REGISTER   = 999;
 
-    constexpr bool SHOW_ZERO = true;
+    constexpr bool SHOW_ZERO = false;
 
     bool scanRequested = false;
     unsigned long startDelay = 0;
@@ -21,9 +22,6 @@ namespace
 
 void registerScannerBegin()
 {
-    // Automatically perform one scan after boot
-    scanRequested = true;
-    startDelay = millis();
 }
 
 void registerScannerStart()
@@ -40,15 +38,14 @@ void registerScannerLoop()
     if (!modbusConnected())
         return;
 
-    // Give the Cerbo time to settle
-    if (millis() - startDelay < 5000)
+    if (millis() - startDelay < 1000)
         return;
 
     Serial.println();
     Serial.println("==============================================================");
 
     if (firstScan)
-        Serial.println("Initial Register Scan");
+        Serial.println("Register Discovery");
     else
         Serial.println("Changed Registers");
 
@@ -60,13 +57,14 @@ void registerScannerLoop()
     Serial.println("==============================================================");
     Serial.println();
 
+    uint16_t foundCount = 0;
+    uint16_t changedCount = 0;
+
     if (firstScan)
     {
         Serial.println(" Reg    Unsigned   Signed      Hex");
         Serial.println("--------------------------------------------------------------");
     }
-
-    uint16_t changedCount = 0;
 
     for (uint16_t reg = START_REGISTER; reg <= END_REGISTER; reg++)
     {
@@ -75,8 +73,15 @@ void registerScannerLoop()
         if (!readHoldingRegister(CERBO_UNIT, reg, value))
             continue;
 
-        if (!SHOW_ZERO && value == 0)
+        validRegister[reg] = true;
+        foundCount++;
+
+        if (!SHOW_ZERO && (value == 0 || value == 0xFFFF))
+        {
+            previousValues[reg] = value;
+            delay(2);
             continue;
+        }
 
         if (firstScan)
         {
@@ -107,30 +112,14 @@ void registerScannerLoop()
 
     Serial.println();
 
-    if (!firstScan)
-    {
-        Serial.printf("Total Changed Registers : %u\n",
-                      changedCount);
-        Serial.println();
-    }
+    Serial.printf("Registers Found   : %u\n", foundCount);
 
-    Serial.println("==============================================================");
-    Serial.println("Scan complete.");
-    Serial.println("==============================================================");
+    if (!firstScan)
+        Serial.printf("Registers Changed : %u\n", changedCount);
+
     Serial.println();
+    Serial.println("==============================================================");
 
     firstScan = false;
     scanRequested = false;
-
-    Serial.println("======================================");
-    Serial.println("Scan finished.");
-    Serial.println("Copy the output now.");
-    Serial.println("Press the ESP32 RESET button to scan again.");
-    Serial.println("======================================");
-
-    // Temporary debugging pause
-    while (true)
-    {
-        delay(1000);
-    }
 }

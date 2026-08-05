@@ -13,23 +13,23 @@ constexpr char PROJECT_VERSION[] = "0.3.0";
 // Feature Enables
 //==========================================================
 
-constexpr bool ENABLE_MODBUS           = true;
-constexpr bool ENABLE_MQTT             = true;
-constexpr bool ENABLE_REGISTER_SCANNER = false;
-constexpr bool ENABLE_CT_MANAGER       = false;
+constexpr bool ENABLE_MODBUS             = true;
+constexpr bool ENABLE_MQTT               = true;
 
-constexpr bool ENABLE_LOGGING          = true;
-constexpr bool ENABLE_DEBUG            = true;
+constexpr bool ENABLE_REGISTER_SCANNER   = false;
+constexpr bool ENABLE_REGISTER_WATCH     = false;
+constexpr bool ENABLE_REGISTER_PROBE     = true;
+constexpr bool ENABLE_REGISTER_POLLER    = true;
+
+constexpr bool ENABLE_CT_MANAGER         = false;
+
+constexpr bool ENABLE_LOGGING            = true;
+constexpr bool ENABLE_DEBUG              = true;
+constexpr bool ENABLE_SYSTEM_DATA_SERIAL = false;
 
 //==========================================================
 // Developer Mode
 //==========================================================
-
-// Enables register scanner, serial command interface and
-// future debugging tools.
-//
-// false = Production firmware
-// true  = Development firmware
 
 constexpr bool ENABLE_DEVELOPER_MODE = true;
 

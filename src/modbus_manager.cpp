@@ -4,6 +4,7 @@
 #include <WiFi.h>
 #include <ModbusIP_ESP8266.h>
 
+#include "config.h"
 #include "secrets.h"
 #include "wifi_manager.h"
 #include "victron_data.h"
@@ -69,10 +70,6 @@ void modbusLoop()
     uint16_t raw;
     bool ok = true;
 
-    //
-    // ===== SYSTEM SERVICE (Unit 100) =====
-    //
-
     //--------------------------------------------------
     // Battery
     //--------------------------------------------------
@@ -112,11 +109,29 @@ void modbusLoop()
         ok = false;
 
     //--------------------------------------------------
-    // PV
+    // AC Coupled PV
+    //--------------------------------------------------
+
+    if (readHoldingRegister(Victron::Unit::SYSTEM, 808, raw))
+        victron.pvInverter1Power = raw;
+    else
+        ok = false;
+
+    if (readHoldingRegister(Victron::Unit::SYSTEM, 893, raw))
+        victron.pvInverter2Power = raw;
+    else
+        ok = false;
+
+    victron.pvTotalPower =
+        victron.pvInverter1Power +
+        victron.pvInverter2Power;
+
+    //--------------------------------------------------
+    // DC PV (Victron MPPT)
     //--------------------------------------------------
 
     if (readHoldingRegister(Victron::Unit::SYSTEM, 850, raw))
-        victron.pvAcOutputL1 = raw;
+        victron.pvDcPower = raw;
     else
         ok = false;
 
@@ -137,38 +152,58 @@ void modbusLoop()
         return;
     }
 
-    Serial.println();
-    Serial.println("=========================================");
-    Serial.println("          VICTRON SYSTEM DATA");
-    Serial.println("=========================================");
+    //--------------------------------------------------
+    // Serial Output (Developer Option)
+    //--------------------------------------------------
 
-    Serial.printf("Battery Voltage : %.1f V\n",
-                  victron.batteryVoltage);
+    if (ENABLE_SYSTEM_DATA_SERIAL)
+    {
+        Serial.println();
+        Serial.println("=========================================");
+        Serial.println("          VICTRON SYSTEM DATA");
+        Serial.println("=========================================");
 
-    Serial.printf("Battery Current : %.1f A\n",
-                  victron.batteryCurrent);
+        Serial.printf("Battery Voltage : %.1f V\n",
+                      victron.batteryVoltage);
 
-    Serial.printf("Battery Power   : %d W\n",
-                  victron.batteryPower);
+        Serial.printf("Battery Current : %.1f A\n",
+                      victron.batteryCurrent);
 
-    Serial.printf("Battery SOC     : %.0f %%\n",
-                  victron.batterySOC);
+        Serial.printf("Battery Power   : %d W\n",
+                      victron.batteryPower);
 
-    Serial.println();
+        Serial.printf("Battery SOC     : %.0f %%\n",
+                      victron.batterySOC);
 
-    Serial.printf("Grid Power      : %d W\n",
-                  victron.gridPowerL1);
+        Serial.println();
 
-    Serial.printf("AC Consumption  : %u W\n",
-                  victron.acConsumptionL1);
+        Serial.printf("Grid Power      : %d W\n",
+                      victron.gridPowerL1);
 
-    Serial.printf("PV DC Power     : %u W\n",
-                  victron.pvAcOutputL1);
+        Serial.printf("AC Consumption  : %u W\n",
+                      victron.acConsumptionL1);
 
-    Serial.printf("Charger Power   : %u W\n",
-                  victron.chargerPower);
+        Serial.println();
 
-    Serial.println();
+        Serial.printf("PV Inverter 1   : %u W\n",
+                      victron.pvInverter1Power);
+
+        Serial.printf("PV Inverter 2   : %u W\n",
+                      victron.pvInverter2Power);
+
+        Serial.println("-----------------------------------------");
+
+        Serial.printf("PV Total        : %u W\n",
+                      victron.pvTotalPower);
+
+        Serial.printf("PV DC Power     : %u W\n",
+                      victron.pvDcPower);
+
+        Serial.printf("Charger Power   : %u W\n",
+                      victron.chargerPower);
+
+        Serial.println();
+    }
 }
 
 bool readHoldingRegister(uint8_t unitId,

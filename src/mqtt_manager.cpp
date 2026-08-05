@@ -4,7 +4,6 @@
 
 #include "wifi_manager.h"
 #include "mqtt_manager.h"
-#include "mqtt_publish.h"
 #include "secrets.h"
 
 WiFiClient wifiClient;
@@ -20,7 +19,6 @@ static const char* TOPIC_HEARTBEAT = "VictronCT/heartbeat";
 //------------------------------------------------------
 
 unsigned long lastHeartbeat = 0;
-unsigned long lastPublish   = 0;
 
 //------------------------------------------------------
 
@@ -63,7 +61,6 @@ void mqttLoop()
                 true);
 
             lastHeartbeat = millis();
-            lastPublish   = 0;
         }
         else
         {
@@ -79,17 +76,6 @@ void mqttLoop()
     mqttClient.loop();
 
     //--------------------------------------------------
-    // Publish Victron data every 5 seconds
-    //--------------------------------------------------
-
-    if (millis() - lastPublish >= 5000)
-    {
-        lastPublish = millis();
-
-        mqttPublishVictronData();
-    }
-
-    //--------------------------------------------------
     // Heartbeat every 30 seconds
     //--------------------------------------------------
 
@@ -98,7 +84,11 @@ void mqttLoop()
         lastHeartbeat = millis();
 
         char uptime[20];
-        sprintf(uptime, "%lu", millis() / 1000);
+
+        sprintf(
+            uptime,
+            "%lu",
+            millis() / 1000);
 
         mqttClient.publish(
             TOPIC_HEARTBEAT,
@@ -116,15 +106,23 @@ bool mqttConnected()
 
 //------------------------------------------------------
 
-void mqttPublish(
+bool mqttPublish(
     const char* topic,
     const char* payload)
 {
     if (!mqttConnected())
-        return;
+    {
+        Serial.println("MQTT publish FAILED (not connected)");
+        return false;
+    }
 
-    mqttClient.publish(
+    bool ok = mqttClient.publish(
         topic,
         payload,
         true);
+
+    Serial.print(ok ? "MQTT OK: " : "MQTT FAILED: ");
+    Serial.println(topic);
+
+    return ok;
 }

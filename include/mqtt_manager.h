@@ -8,7 +8,6 @@ void mqttLoop();
 
 bool mqttConnected();
 
-void mqttPublish(
+bool mqttPublish(
     const char* topic,
     const char* payload);
-
