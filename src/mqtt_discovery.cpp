@@ -78,16 +78,14 @@ void mqttDiscoveryPublishRegister(
         }
     }
 
-    //--------------------------------------------------
-    // Defaults for unknown registers
-    //--------------------------------------------------
-
     const char* name = nullptr;
     const char* units = "";
     const char* icon = "mdi:chip";
     const char* deviceClass = nullptr;
     const char* stateClass = "measurement";
+
     uint8_t decimals = 0;
+    bool writable = false;
 
     char unknownName[32];
 
@@ -97,9 +95,13 @@ void mqttDiscoveryPublishRegister(
         units = info->units;
         icon = info->icon;
         decimals = info->decimals;
+        writable = info->writable;
 
-        deviceClass = deviceClassToString(info->deviceClass);
-        stateClass = stateClassToString(info->stateClass);
+        deviceClass =
+            deviceClassToString(info->deviceClass);
+
+        stateClass =
+            stateClassToString(info->stateClass);
     }
     else
     {
@@ -112,6 +114,8 @@ void mqttDiscoveryPublishRegister(
         name = unknownName;
     }
 
+    //--------------------------------------------------
+    // Sensor entity
     //--------------------------------------------------
 
     char topic[128];
@@ -155,19 +159,13 @@ void mqttDiscoveryPublishRegister(
         json += "\",";
     }
 
-    if (stateClass)
-    {
-        json += "\"state_class\":\"";
-        json += stateClass;
-        json += "\",";
-    }
+    json += "\"state_class\":\"";
+    json += stateClass;
+    json += "\",";
 
-    if (strlen(icon))
-    {
-        json += "\"icon\":\"";
-        json += icon;
-        json += "\",";
-    }
+    json += "\"icon\":\"";
+    json += icon;
+    json += "\",";
 
     json += "\"suggested_display_precision\":";
     json += decimals;
@@ -183,5 +181,63 @@ void mqttDiscoveryPublishRegister(
     json += "\"model\":\"Victron Modbus Gateway\"";
     json += "}}";
 
-    mqttPublish(topic, json.c_str());
+    mqttPublish(
+        topic,
+        json.c_str());
+
+
+    //--------------------------------------------------
+    // Writable number entity
+    //--------------------------------------------------
+
+    if (writable)
+    {
+        snprintf(
+            topic,
+            sizeof(topic),
+            "homeassistant/number/victronct_%u_%u/config",
+            unit,
+            reg);
+
+        String number = "{";
+
+        number += "\"name\":\"";
+        number += name;
+        number += "\",";
+        
+        number += "\"unique_id\":\"victronct_number_";
+        number += unit;
+        number += "_";
+        number += reg;
+        number += "\",";
+
+        number += "\"state_topic\":\"VictronCT/register/";
+        number += unit;
+        number += "/";
+        number += reg;
+        number += "\",";
+
+        number += "\"command_topic\":\"VictronCT/write/";
+        number += unit;
+        number += "/";
+        number += reg;
+        number += "\",";
+
+        number += "\"mode\":\"box\",";
+        number += "\"icon\":\"mdi:tune\",";
+        number += "\"step\":1";
+
+        number += ",";
+
+        number += "\"device\":{";
+        number += "\"identifiers\":[\"VictronCT\"],";
+        number += "\"name\":\"VictronCT\",";
+        number += "\"manufacturer\":\"AlpineChili\",";
+        number += "\"model\":\"Victron Modbus Gateway\"";
+        number += "}}";
+
+        mqttPublish(
+            topic,
+            number.c_str());
+    }
 }
