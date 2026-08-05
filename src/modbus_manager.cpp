@@ -70,10 +70,6 @@ void modbusLoop()
     uint16_t raw;
     bool ok = true;
 
-    //--------------------------------------------------
-    // Battery
-    //--------------------------------------------------
-
     if (readHoldingRegister(Victron::Unit::SYSTEM, 840, raw))
         victron.batteryVoltage = raw / 10.0f;
     else
@@ -94,10 +90,6 @@ void modbusLoop()
     else
         ok = false;
 
-    //--------------------------------------------------
-    // AC
-    //--------------------------------------------------
-
     if (readHoldingRegister(Victron::Unit::SYSTEM, 817, raw))
         victron.acConsumptionL1 = raw;
     else
@@ -107,10 +99,6 @@ void modbusLoop()
         victron.gridPowerL1 = (int16_t)raw;
     else
         ok = false;
-
-    //--------------------------------------------------
-    // AC Coupled PV
-    //--------------------------------------------------
 
     if (readHoldingRegister(Victron::Unit::SYSTEM, 808, raw))
         victron.pvInverter1Power = raw;
@@ -126,18 +114,10 @@ void modbusLoop()
         victron.pvInverter1Power +
         victron.pvInverter2Power;
 
-    //--------------------------------------------------
-    // DC PV (Victron MPPT)
-    //--------------------------------------------------
-
     if (readHoldingRegister(Victron::Unit::SYSTEM, 850, raw))
         victron.pvDcPower = raw;
     else
         ok = false;
-
-    //--------------------------------------------------
-    // Charger
-    //--------------------------------------------------
 
     if (readHoldingRegister(Victron::Unit::SYSTEM, 855, raw))
         victron.chargerPower = raw;
@@ -145,70 +125,12 @@ void modbusLoop()
         ok = false;
 
     victron.online = ok;
-
-    if (!ok)
-    {
-        Serial.println("System register read failed");
-        return;
-    }
-
-    //--------------------------------------------------
-    // Serial Output (Developer Option)
-    //--------------------------------------------------
-
-    if (ENABLE_SYSTEM_DATA_SERIAL)
-    {
-        Serial.println();
-        Serial.println("=========================================");
-        Serial.println("          VICTRON SYSTEM DATA");
-        Serial.println("=========================================");
-
-        Serial.printf("Battery Voltage : %.1f V\n",
-                      victron.batteryVoltage);
-
-        Serial.printf("Battery Current : %.1f A\n",
-                      victron.batteryCurrent);
-
-        Serial.printf("Battery Power   : %d W\n",
-                      victron.batteryPower);
-
-        Serial.printf("Battery SOC     : %.0f %%\n",
-                      victron.batterySOC);
-
-        Serial.println();
-
-        Serial.printf("Grid Power      : %d W\n",
-                      victron.gridPowerL1);
-
-        Serial.printf("AC Consumption  : %u W\n",
-                      victron.acConsumptionL1);
-
-        Serial.println();
-
-        Serial.printf("PV Inverter 1   : %u W\n",
-                      victron.pvInverter1Power);
-
-        Serial.printf("PV Inverter 2   : %u W\n",
-                      victron.pvInverter2Power);
-
-        Serial.println("-----------------------------------------");
-
-        Serial.printf("PV Total        : %u W\n",
-                      victron.pvTotalPower);
-
-        Serial.printf("PV DC Power     : %u W\n",
-                      victron.pvDcPower);
-
-        Serial.printf("Charger Power   : %u W\n",
-                      victron.chargerPower);
-
-        Serial.println();
-    }
 }
 
-bool readHoldingRegister(uint8_t unitId,
-                         uint16_t address,
-                         uint16_t& value)
+bool readHoldingRegister(
+    uint8_t unitId,
+    uint16_t address,
+    uint16_t& value)
 {
     value = 0;
 
@@ -244,10 +166,11 @@ bool readHoldingRegister(uint8_t unitId,
     return true;
 }
 
-bool readHoldingRegisters(uint8_t unitId,
-                          uint16_t startAddress,
-                          uint16_t count,
-                          uint16_t* values)
+bool readHoldingRegisters(
+    uint8_t unitId,
+    uint16_t startAddress,
+    uint16_t count,
+    uint16_t* values)
 {
     if (!connected)
         return false;
@@ -281,9 +204,52 @@ bool readHoldingRegisters(uint8_t unitId,
     return true;
 }
 
-bool readRegister(uint8_t unitId,
-                  const Victron::RegisterInfo& reg,
-                  float& value)
+bool writeHoldingRegister(
+    uint8_t unitId,
+    uint16_t address,
+    uint16_t value)
+{
+    if (!connected)
+        return false;
+
+    uint16_t transaction = mb.writeHreg(
+        CERBO_IP,
+        address,
+        value,
+        nullptr,
+        unitId);
+
+    if (transaction == 0)
+        return false;
+
+    unsigned long start = millis();
+
+    while (mb.isTransaction(transaction))
+    {
+        mb.task();
+
+        if (millis() - start > 1000)
+        {
+            Serial.println("Modbus write timeout");
+            return false;
+        }
+
+        delay(1);
+    }
+
+    Serial.printf(
+        "Modbus write OK - Unit %u Register %u = %u\n",
+        unitId,
+        address,
+        value);
+
+    return true;
+}
+
+bool readRegister(
+    uint8_t unitId,
+    const Victron::RegisterInfo& reg,
+    float& value)
 {
     uint16_t raw;
 
