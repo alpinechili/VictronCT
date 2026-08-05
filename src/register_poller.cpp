@@ -28,39 +28,34 @@ void registerPollerLoop()
 
     lastPoll = millis();
 
-    const DeveloperRegister* reg = developerRegisterAt(currentIndex);
+    const DeveloperRegister* reg = nullptr;
 
-    if (!reg)
+    while (true)
     {
-        Serial.println("End of register table");
-        currentIndex = 0;
-        return;
+        reg = developerRegisterAt(currentIndex);
+
+        currentIndex++;
+
+        if (currentIndex >= developerRegisterCount())
+            currentIndex = 0;
+
+        if (!reg)
+            return;
+
+        if (reg->autoPoll)
+            break;
     }
-
-    Serial.printf(
-        "Index=%u  Unit=%u  Reg=%u  Auto=%s\n",
-        currentIndex,
-        reg->unit,
-        reg->address,
-        reg->autoPoll ? "YES" : "NO");
-
-    currentIndex++;
-
-    if (!reg->autoPoll)
-        return;
 
     uint16_t value;
 
-    if (!readHoldingRegister(reg->unit, reg->address, value))
+    if (readHoldingRegister(
+            reg->unit,
+            reg->address,
+            value))
     {
-        Serial.println("Read FAILED");
-        return;
+        registerMqttPublish(
+            reg->unit,
+            reg->address,
+            (int16_t)value);
     }
-
-    Serial.printf("Value=%d\n", (int16_t)value);
-
-    registerMqttPublish(
-        reg->unit,
-        reg->address,
-        (int16_t)value);
 }
