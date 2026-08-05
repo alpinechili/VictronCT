@@ -3,6 +3,7 @@
 #include <Arduino.h>
 
 #include "config.h"
+#include "modbus_manager.h"
 #include "register_probe.h"
 #include "register_scanner.h"
 #include "register_recorder.h"
@@ -24,6 +25,56 @@ void serialCommandsLoop()
 
     cmd.trim();
     cmd.toLowerCase();
+
+    //--------------------------------------------------
+    // WRITE
+    //
+    // write <unit> <register> <value>
+    //--------------------------------------------------
+
+    if (cmd.startsWith("write "))
+    {
+        int p1 = cmd.indexOf(' ');
+        int p2 = cmd.indexOf(' ', p1 + 1);
+        int p3 = cmd.indexOf(' ', p2 + 1);
+
+        if (p3 < 0)
+        {
+            Serial.println();
+            Serial.println("Usage:");
+            Serial.println("write <unit> <register> <value>");
+            Serial.println();
+
+            return;
+        }
+
+        uint8_t unit =
+            cmd.substring(p1 + 1, p2).toInt();
+
+        uint16_t reg =
+            cmd.substring(p2 + 1, p3).toInt();
+
+        uint16_t value =
+            cmd.substring(p3 + 1).toInt();
+
+        Serial.println();
+
+        if (writeHoldingRegister(
+                unit,
+                reg,
+                value))
+        {
+            Serial.println("Write successful.");
+        }
+        else
+        {
+            Serial.println("Write failed.");
+        }
+
+        Serial.println();
+
+        return;
+    }
 
     //--------------------------------------------------
     // PROBE OFF
@@ -170,6 +221,8 @@ void serialCommandsLoop()
         Serial.println("help");
         Serial.println("version");
         Serial.println("scan");
+        Serial.println();
+        Serial.println("write <unit> <register> <value>");
         Serial.println();
         Serial.println("probe <unit> <register>");
         Serial.println("probe off");
