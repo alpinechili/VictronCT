@@ -5,6 +5,7 @@
 #include "wifi_manager.h"
 #include "mqtt_manager.h"
 #include "modbus_manager.h"
+#include "developer_registers.h"
 #include "secrets.h"
 
 WiFiClient wifiClient;
@@ -62,8 +63,30 @@ static void mqttCallback(
 
     valueBuffer[length] = 0;
 
-    uint16_t value =
-        atoi(valueBuffer);
+
+    //--------------------------------------------------
+    // Convert HA value to Victron raw value
+    //--------------------------------------------------
+
+    float requestedValue =
+        atof(valueBuffer);
+
+    const DeveloperRegister* info =
+        findDeveloperRegister(unit, reg);
+
+    uint16_t value;
+
+    if (info && info->scale != 1.0f)
+    {
+        value =
+            (uint16_t)(requestedValue * info->scale);
+    }
+    else
+    {
+        value =
+            (uint16_t)requestedValue;
+    }
+
 
     Serial.println();
     Serial.println("MQTT WRITE REQUEST");
@@ -77,8 +100,13 @@ static void mqttCallback(
         reg);
 
     Serial.printf(
-        "Value    : %u\n",
+        "HA Value : %.2f\n",
+        requestedValue);
+
+    Serial.printf(
+        "Raw Value: %u\n",
         value);
+
 
     if (writeHoldingRegister(
             unit,
@@ -155,6 +183,7 @@ void mqttLoop()
     }
 
     mqttClient.loop();
+
 
     //--------------------------------------------------
     // Heartbeat every 30 seconds
