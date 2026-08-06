@@ -19,22 +19,60 @@ constexpr uint16_t CACHE_SIZE = 64;
 
 static CacheEntry cache[CACHE_SIZE];
 
+static bool discoveryPublished = false;
+
+
+static void publishAllDiscovery()
+{
+    if (discoveryPublished)
+        return;
+
+    if (!mqttConnected())
+        return;
+
+    uint16_t count = developerRegisterCount();
+
+    for (uint16_t i = 0; i < count; i++)
+    {
+        const DeveloperRegister* info =
+            developerRegisterAt(i);
+
+        if (info)
+        {
+            mqttDiscoveryPublishRegister(
+                info->unit,
+                info->address,
+                info);
+        }
+    }
+
+    discoveryPublished = true;
+
+    Serial.println("MQTT discovery published");
+}
+
+
 void registerMqttBegin()
 {
     memset(cache, 0, sizeof(cache));
+
+    discoveryPublished = false;
 }
+
 
 void registerMqttLoop()
 {
+    publishAllDiscovery();
 }
+
 
 void registerMqttPublish(
     uint8_t unit,
     uint16_t reg,
     int16_t value)
 {
-    bool firstPublish = false;
     bool found = false;
+
 
     //--------------------------------------------------
     // Check cache
@@ -58,6 +96,7 @@ void registerMqttPublish(
         }
     }
 
+
     //--------------------------------------------------
     // New register
     //--------------------------------------------------
@@ -72,11 +111,11 @@ void registerMqttPublish(
                 cache[i].unit = unit;
                 cache[i].reg = reg;
                 cache[i].value = value;
-                firstPublish = true;
                 break;
             }
         }
     }
+
 
     //--------------------------------------------------
     // Discovery
@@ -92,6 +131,7 @@ void registerMqttPublish(
             reg,
             info);
     }
+
 
     //--------------------------------------------------
     // Format value
@@ -129,6 +169,7 @@ void registerMqttPublish(
             value);
     }
 
+
     //--------------------------------------------------
     // Raw register topic
     //--------------------------------------------------
@@ -145,6 +186,7 @@ void registerMqttPublish(
     mqttPublish(
         topic,
         payload);
+
 
     //--------------------------------------------------
     // Friendly topic

@@ -2,6 +2,7 @@
 #include <WiFi.h>
 #include <PubSubClient.h>
 
+#include "config.h"
 #include "wifi_manager.h"
 #include "mqtt_manager.h"
 #include "modbus_manager.h"
@@ -34,8 +35,7 @@ static void mqttCallback(
 {
     String topicString = topic;
 
-    if (!topicString.startsWith("VictronCT/write/"))
-        return;
+    return;
 
     String path = topicString.substring(
         strlen("VictronCT/write/"));
@@ -63,11 +63,6 @@ static void mqttCallback(
 
     valueBuffer[length] = 0;
 
-
-    //--------------------------------------------------
-    // Convert HA value to Victron raw value
-    //--------------------------------------------------
-
     float requestedValue =
         atof(valueBuffer);
 
@@ -87,7 +82,6 @@ static void mqttCallback(
             (uint16_t)requestedValue;
     }
 
-
     Serial.println();
     Serial.println("MQTT WRITE REQUEST");
 
@@ -106,7 +100,6 @@ static void mqttCallback(
     Serial.printf(
         "Raw Value: %u\n",
         value);
-
 
     if (writeHoldingRegister(
             unit,
@@ -184,7 +177,6 @@ void mqttLoop()
 
     mqttClient.loop();
 
-
     //--------------------------------------------------
     // Heartbeat every 30 seconds
     //--------------------------------------------------
@@ -222,7 +214,11 @@ bool mqttPublish(
 {
     if (!mqttConnected())
     {
-        Serial.println("MQTT publish FAILED (not connected)");
+        if (ENABLE_MQTT_DEBUG)
+        {
+            Serial.println("MQTT publish FAILED (not connected)");
+        }
+
         return false;
     }
 
@@ -231,8 +227,11 @@ bool mqttPublish(
         payload,
         true);
 
-    Serial.print(ok ? "MQTT OK: " : "MQTT FAILED: ");
-    Serial.println(topic);
+    if (ENABLE_MQTT_DEBUG)
+    {
+        Serial.print(ok ? "MQTT OK: " : "MQTT FAILED: ");
+        Serial.println(topic);
+    }
 
     return ok;
 }

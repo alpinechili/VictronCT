@@ -3,6 +3,7 @@
 #include "config.h"
 #include "modbus_manager.h"
 #include "mqtt_manager.h"
+#include "ota_manager.h"
 #include "register_mqtt.h"
 #include "register_poller.h"
 #include "register_probe.h"
@@ -11,6 +12,7 @@
 #include "register_watch.h"
 #include "serial_commands.h"
 #include "wifi_manager.h"
+#include "web_manager.h"
 
 void setup()
 {
@@ -26,6 +28,9 @@ void setup()
     Serial.println();
 
     wifiBegin();
+    otaBegin();
+    webBegin();
+
     mqttBegin();
     modbusBegin();
 
@@ -34,11 +39,11 @@ void setup()
     if (ENABLE_REGISTER_POLLER)
         registerPollerBegin();
 
-    if (ENABLE_DEVELOPER_MODE && ENABLE_REGISTER_PROBE)
-        registerProbeBegin();
-
     if (ENABLE_REGISTER_SCANNER)
         registerScannerBegin();
+
+    if (ENABLE_DEVELOPER_MODE && ENABLE_REGISTER_PROBE)
+        registerProbeBegin();
 
     if (ENABLE_REGISTER_WATCH)
         registerWatchBegin();
@@ -49,6 +54,8 @@ void setup()
 void loop()
 {
     wifiLoop();
+    otaLoop();
+    webLoop();
 
     if (ENABLE_MQTT)
         mqttLoop();

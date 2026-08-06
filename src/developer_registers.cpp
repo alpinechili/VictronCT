@@ -96,13 +96,13 @@ static const DeveloperRegister registers[] =
         "mdi:solar-power",
         false},
 
-    {100, 879, "Load Metric", nullptr,
-        1.0f, RegisterType::INT16, "",
-        0, RegisterCategory::Unknown,
-        HADeviceClass::None,
+    {100, 879, "CT Load Power", "ct/load_power",
+        1.0f, RegisterType::INT16, "W",
+        0, RegisterCategory::Power,
+        HADeviceClass::Power,
         HAStateClass::Measurement,
-        "mdi:chart-line",
-        false},
+        "mdi:current-ac",
+        true},
 
     {100, 885, "PV Inverter 1", "pv/inverter1",
         1.0f, RegisterType::UINT16, "W",
@@ -173,7 +173,7 @@ static const DeveloperRegister registers[] =
         true,
         true},
 
-    {227, 23, "Unknown Power", "vebus/unknown_power",
+        {227, 23, "Unknown Power", "vebus/unknown_power",
         1.0f, RegisterType::INT16, "",
         0, RegisterCategory::Power,
         HADeviceClass::Power,
@@ -241,19 +241,24 @@ static const DeveloperRegister registers[] =
 static const size_t registerCount =
     sizeof(registers) / sizeof(registers[0]);
 
-const DeveloperRegister* findDeveloperRegister(uint8_t unit, uint16_t address)
+const DeveloperRegister* findDeveloperRegister(
+    uint8_t unit,
+    uint16_t address)
 {
     for (size_t i = 0; i < registerCount; i++)
     {
         if (registers[i].unit == unit &&
             registers[i].address == address)
+        {
             return &registers[i];
+        }
     }
 
     return nullptr;
 }
 
-const DeveloperRegister* developerRegisterAt(uint16_t index)
+const DeveloperRegister* developerRegisterAt(
+    uint16_t index)
 {
     if (index >= registerCount)
         return nullptr;

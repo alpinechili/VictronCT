@@ -11,8 +11,8 @@ static bool firstScan = true;
 
 namespace
 {
-    constexpr uint16_t START_REGISTER = 0;
-    constexpr uint16_t END_REGISTER   = 999;
+    constexpr uint16_t START_REGISTER = 800;
+    constexpr uint16_t END_REGISTER   = 900;
 
     constexpr bool SHOW_ZERO = false;
 
@@ -36,10 +36,14 @@ void registerScannerLoop()
         return;
 
     if (!modbusConnected())
+    {
+        Serial.println("Scanner waiting for Modbus...");
         return;
+    }
 
     if (millis() - startDelay < 1000)
         return;
+
 
     Serial.println();
     Serial.println("==============================================================");
@@ -57,8 +61,10 @@ void registerScannerLoop()
     Serial.println("==============================================================");
     Serial.println();
 
+
     uint16_t foundCount = 0;
     uint16_t changedCount = 0;
+
 
     if (firstScan)
     {
@@ -66,59 +72,92 @@ void registerScannerLoop()
         Serial.println("--------------------------------------------------------------");
     }
 
-    for (uint16_t reg = START_REGISTER; reg <= END_REGISTER; reg++)
+
+    for (uint16_t reg = START_REGISTER;
+         reg <= END_REGISTER;
+         reg++)
     {
         uint16_t value;
 
-        if (!readHoldingRegister(CERBO_UNIT, reg, value))
+
+        Serial.printf("Reading R%u ... ", reg);
+
+
+        if (!readHoldingRegister(
+                CERBO_UNIT,
+                reg,
+                value))
+        {
+            Serial.println("FAILED");
             continue;
+        }
+
+
+        Serial.printf("OK %u\n", value);
+
 
         validRegister[reg] = true;
         foundCount++;
 
-        if (!SHOW_ZERO && (value == 0 || value == 0xFFFF))
+
+        if (!SHOW_ZERO &&
+            (value == 0 || value == 0xFFFF))
         {
             previousValues[reg] = value;
             delay(2);
             continue;
         }
 
+
         if (firstScan)
         {
-            Serial.printf("R%-4u %8u %8d   0x%04X\n",
-                          reg,
-                          value,
-                          (int16_t)value,
-                          value);
+            Serial.printf(
+                "R%-4u %8u %8d   0x%04X\n",
+                reg,
+                value,
+                (int16_t)value,
+                value);
         }
         else
         {
             if (previousValues[reg] != value)
             {
-                Serial.printf("R%-4u %8d -> %8d   (%+d)\n",
-                              reg,
-                              (int16_t)previousValues[reg],
-                              (int16_t)value,
-                              (int16_t)value - (int16_t)previousValues[reg]);
+                Serial.printf(
+                    "R%-4u %8d -> %8d   (%+d)\n",
+                    reg,
+                    (int16_t)previousValues[reg],
+                    (int16_t)value,
+                    (int16_t)value - (int16_t)previousValues[reg]);
 
                 changedCount++;
             }
         }
+
 
         previousValues[reg] = value;
 
         delay(2);
     }
 
+
     Serial.println();
 
-    Serial.printf("Registers Found   : %u\n", foundCount);
+    Serial.printf(
+        "Registers Found   : %u\n",
+        foundCount);
+
 
     if (!firstScan)
-        Serial.printf("Registers Changed : %u\n", changedCount);
+    {
+        Serial.printf(
+            "Registers Changed : %u\n",
+            changedCount);
+    }
+
 
     Serial.println();
     Serial.println("==============================================================");
+
 
     firstScan = false;
     scanRequested = false;

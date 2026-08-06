@@ -230,12 +230,7 @@ void mqttDiscoveryPublishRegister(
         number += reg;
         number += "\",";
 
-        number += "\"mode\":\"slider\",";
-
-        number += "\"min\":0,";
-        number += "\"max\":100,";
-        number += "\"step\":0.1,";
-
+        number += "\"mode\":\"box\",";
         number += "\"icon\":\"mdi:tune\",";
 
         number += "\"device\":{";

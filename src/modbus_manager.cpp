@@ -146,7 +146,11 @@ bool readHoldingRegister(
         unitId);
 
     if (transaction == 0)
+    {
+        connected = false;
+        victron.online = false;
         return false;
+    }
 
     unsigned long start = millis();
 
@@ -157,6 +161,8 @@ bool readHoldingRegister(
         if (millis() - start > 1000)
         {
             Serial.println("Modbus timeout");
+            connected = false;
+            victron.online = false;
             return false;
         }
 
@@ -184,7 +190,11 @@ bool readHoldingRegisters(
         unitId);
 
     if (transaction == 0)
+    {
+        connected = false;
+        victron.online = false;
         return false;
+    }
 
     unsigned long start = millis();
 
@@ -195,6 +205,8 @@ bool readHoldingRegisters(
         if (millis() - start > 1000)
         {
             Serial.println("Modbus timeout");
+            connected = false;
+            victron.online = false;
             return false;
         }
 
@@ -220,7 +232,11 @@ bool writeHoldingRegister(
         unitId);
 
     if (transaction == 0)
+    {
+        connected = false;
+        victron.online = false;
         return false;
+    }
 
     unsigned long start = millis();
 
@@ -231,6 +247,8 @@ bool writeHoldingRegister(
         if (millis() - start > 1000)
         {
             Serial.println("Modbus write timeout");
+            connected = false;
+            victron.online = false;
             return false;
         }
 
