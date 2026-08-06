@@ -223,13 +223,6 @@ void mqttDiscoveryPublishRegister(
         // Scale raw register value for HA display
         //--------------------------------------------------
 
-        if (info && info->scale != 1.0f)
-        {
-            number += "\"value_template\":\"{{ value | float / ";
-            number += String(info->scale);
-            number += " }}\",";
-        }
-
 
         number += "\"command_topic\":\"VictronCT/write/";
         number += unit;
