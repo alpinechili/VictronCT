@@ -34,24 +34,11 @@ void registerMqttPublish(
     int16_t value)
 {
     bool firstPublish = false;
-
-    for (uint16_t i = 0; i < CACHE_SIZE; i++)
-    {
-        if (!cache[i].valid)
-            continue;
-
-        if (cache[i].unit == unit &&
-            cache[i].reg == reg)
-        {
-            if (cache[i].value == value)
-                return;
-
-            cache[i].value = value;
-            break;
-        }
-    }
-
     bool found = false;
+
+    //--------------------------------------------------
+    // Check cache
+    //--------------------------------------------------
 
     for (uint16_t i = 0; i < CACHE_SIZE; i++)
     {
@@ -62,9 +49,18 @@ void registerMqttPublish(
             cache[i].reg == reg)
         {
             found = true;
+
+            if (cache[i].value == value)
+                break;
+
+            cache[i].value = value;
             break;
         }
     }
+
+    //--------------------------------------------------
+    // New register
+    //--------------------------------------------------
 
     if (!found)
     {
@@ -82,16 +78,24 @@ void registerMqttPublish(
         }
     }
 
+    //--------------------------------------------------
+    // Discovery
+    //--------------------------------------------------
+
     const DeveloperRegister* info =
         findDeveloperRegister(unit, reg);
 
-    if (firstPublish && info)
+    if (info)
     {
         mqttDiscoveryPublishRegister(
             unit,
             reg,
             info);
     }
+
+    //--------------------------------------------------
+    // Format value
+    //--------------------------------------------------
 
     char payload[32];
 
@@ -100,9 +104,15 @@ void registerMqttPublish(
         float scaled;
 
         if (info->type == RegisterType::INT16)
-            scaled = (float)value / info->scale;
+        {
+            scaled =
+                (float)value / info->scale;
+        }
         else
-            scaled = (float)((uint16_t)value) / info->scale;
+        {
+            scaled =
+                (float)((uint16_t)value) / info->scale;
+        }
 
         dtostrf(
             scaled,
@@ -132,7 +142,9 @@ void registerMqttPublish(
         unit,
         reg);
 
-    mqttPublish(topic, payload);
+    mqttPublish(
+        topic,
+        payload);
 
     //--------------------------------------------------
     // Friendly topic

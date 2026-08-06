@@ -114,6 +114,7 @@ void mqttDiscoveryPublishRegister(
         name = unknownName;
     }
 
+
     //--------------------------------------------------
     // Sensor entity
     //--------------------------------------------------
@@ -204,7 +205,7 @@ void mqttDiscoveryPublishRegister(
         number += "\"name\":\"";
         number += name;
         number += "\",";
-        
+
         number += "\"unique_id\":\"victronct_number_";
         number += unit;
         number += "_";
@@ -217,23 +218,40 @@ void mqttDiscoveryPublishRegister(
         number += reg;
         number += "\",";
 
+
+        //--------------------------------------------------
+        // Scale raw register value for HA display
+        //--------------------------------------------------
+
+        if (info && info->scale != 1.0f)
+        {
+            number += "\"value_template\":\"{{ value | float / ";
+            number += String(info->scale);
+            number += " }}\",";
+        }
+
+
         number += "\"command_topic\":\"VictronCT/write/";
         number += unit;
         number += "/";
         number += reg;
         number += "\",";
 
-        number += "\"mode\":\"box\",";
-        number += "\"icon\":\"mdi:tune\",";
-        number += "\"step\":1";
+        number += "\"mode\":\"slider\",";
 
-        number += ",";
+        number += "\"min\":0,";
+        number += "\"max\":100,";
+        number += "\"step\":0.1,";
+
+        number += "\"icon\":\"mdi:tune\",";
 
         number += "\"device\":{";
         number += "\"identifiers\":[\"VictronCT\"],";
         number += "\"name\":\"VictronCT\",";
+
         number += "\"manufacturer\":\"AlpineChili\",";
         number += "\"model\":\"Victron Modbus Gateway\"";
+
         number += "}}";
 
         mqttPublish(

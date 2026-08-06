@@ -170,6 +170,7 @@ static const DeveloperRegister registers[] =
         HADeviceClass::Current,
         HAStateClass::Measurement,
         "mdi:current-ac",
+        true,
         true},
 
     {227, 23, "Unknown Power", "vebus/unknown_power",
