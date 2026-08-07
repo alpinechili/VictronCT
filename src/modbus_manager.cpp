@@ -15,6 +15,10 @@ static const IPAddress CERBO_IP(192, 168, 0, 200);
 
 static bool connected = false;
 static unsigned long lastAttempt = 0;
+static bool readScaledRegister(
+    uint8_t unitId,
+    uint16_t address,
+    float& value);
 
 bool modbusBegin()
 {
@@ -103,23 +107,25 @@ void modbusLoop()
 
     
 
-    if (readHoldingRegister(CERBO_UNIT, 840, raw))
-        victron.batteryVoltage = raw / 10.0f;
+    float value;
+
+    if (readScaledRegister(CERBO_UNIT, 840, value))
+        victron.batteryVoltage = value;
     else
         ok = false;
 
-    if (readHoldingRegister(CERBO_UNIT, 841, raw))
-        victron.batteryCurrent = (int16_t)raw / 10.0f;
+    if (readScaledRegister(CERBO_UNIT, 841, value))
+        victron.batteryCurrent = value;
     else
         ok = false;
 
-    if (readHoldingRegister(CERBO_UNIT, 842, raw))
-        victron.batteryPower = (int16_t)raw;
+    if (readScaledRegister(CERBO_UNIT, 842, value))
+        victron.batteryPower = value;
     else
         ok = false;
 
-    if (readHoldingRegister(CERBO_UNIT, 843, raw))
-        victron.batterySOC = (float)raw;
+    if (readScaledRegister(CERBO_UNIT, 843, value))
+        victron.batterySOC = value;
     else
         ok = false;
 
