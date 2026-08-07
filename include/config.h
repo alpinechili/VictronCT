@@ -7,7 +7,7 @@
 //==========================================================
 
 constexpr char PROJECT_NAME[]    = "VictronCT";
-constexpr char PROJECT_VERSION[] = "2.0.0";
+constexpr char PROJECT_VERSION[] = "2.0.1";
 
 //==========================================================
 // Feature Enables
