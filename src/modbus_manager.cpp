@@ -27,6 +27,37 @@ bool modbusConnected()
     return connected;
 }
 
+static bool modbusWaitForTransaction(uint16_t transaction)
+{
+    if (transaction == 0)
+    {
+        connected = false;
+        victron.online = false;
+        return false;
+    }
+
+    unsigned long start = millis();
+
+    while (mb.isTransaction(transaction))
+    {
+        mb.task();
+
+        if (millis() - start > 1000)
+        {
+            Serial.println("Modbus timeout");
+
+            connected = false;
+            victron.online = false;
+
+            return false;
+        }
+
+        delay(1);
+    }
+
+    return true;
+}
+
 void modbusLoop()
 {
     if (!wifiConnected())
@@ -70,42 +101,44 @@ void modbusLoop()
     uint16_t raw;
     bool ok = true;
 
-    if (readHoldingRegister(Victron::Unit::SYSTEM, 840, raw))
+    
+
+    if (readHoldingRegister(CERBO_UNIT, 840, raw))
         victron.batteryVoltage = raw / 10.0f;
     else
         ok = false;
 
-    if (readHoldingRegister(Victron::Unit::SYSTEM, 841, raw))
+    if (readHoldingRegister(CERBO_UNIT, 841, raw))
         victron.batteryCurrent = (int16_t)raw / 10.0f;
     else
         ok = false;
 
-    if (readHoldingRegister(Victron::Unit::SYSTEM, 842, raw))
+    if (readHoldingRegister(CERBO_UNIT, 842, raw))
         victron.batteryPower = (int16_t)raw;
     else
         ok = false;
 
-    if (readHoldingRegister(Victron::Unit::SYSTEM, 843, raw))
+    if (readHoldingRegister(CERBO_UNIT, 843, raw))
         victron.batterySOC = (float)raw;
     else
         ok = false;
 
-    if (readHoldingRegister(Victron::Unit::SYSTEM, 817, raw))
+    if (readHoldingRegister(CERBO_UNIT, 817, raw))
         victron.acConsumptionL1 = raw;
     else
         ok = false;
 
-    if (readHoldingRegister(Victron::Unit::SYSTEM, 820, raw))
+    if (readHoldingRegister(CERBO_UNIT, 820, raw))
         victron.gridPowerL1 = (int16_t)raw;
     else
         ok = false;
 
-    if (readHoldingRegister(Victron::Unit::SYSTEM, 808, raw))
+    if (readHoldingRegister(CERBO_UNIT, 808, raw))
         victron.pvInverter1Power = raw;
     else
         ok = false;
 
-    if (readHoldingRegister(Victron::Unit::SYSTEM, 893, raw))
+    if (readHoldingRegister(CERBO_UNIT, 893, raw))
         victron.pvInverter2Power = raw;
     else
         ok = false;
@@ -114,12 +147,12 @@ void modbusLoop()
         victron.pvInverter1Power +
         victron.pvInverter2Power;
 
-    if (readHoldingRegister(Victron::Unit::SYSTEM, 850, raw))
+    if (readHoldingRegister(CERBO_UNIT, 850, raw))
         victron.pvDcPower = raw;
     else
         ok = false;
 
-    if (readHoldingRegister(Victron::Unit::SYSTEM, 855, raw))
+    if (readHoldingRegister(CERBO_UNIT, 855, raw))
         victron.chargerPower = raw;
     else
         ok = false;
@@ -145,31 +178,7 @@ bool readHoldingRegister(
         nullptr,
         unitId);
 
-    if (transaction == 0)
-    {
-        connected = false;
-        victron.online = false;
-        return false;
-    }
-
-    unsigned long start = millis();
-
-    while (mb.isTransaction(transaction))
-    {
-        mb.task();
-
-        if (millis() - start > 1000)
-        {
-            Serial.println("Modbus timeout");
-            connected = false;
-            victron.online = false;
-            return false;
-        }
-
-        delay(1);
-    }
-
-    return true;
+    return modbusWaitForTransaction(transaction);
 }
 
 bool readHoldingRegisters(
@@ -231,29 +240,8 @@ bool writeHoldingRegister(
         nullptr,
         unitId);
 
-    if (transaction == 0)
-    {
-        connected = false;
-        victron.online = false;
-        return false;
-    }
-
-    unsigned long start = millis();
-
-    while (mb.isTransaction(transaction))
-    {
-        mb.task();
-
-        if (millis() - start > 1000)
-        {
-            Serial.println("Modbus write timeout");
-            connected = false;
-            victron.online = false;
-            return false;
-        }
-
-        delay(1);
-    }
+    if (!modbusWaitForTransaction(transaction))
+    return false;
 
     Serial.printf(
         "Modbus write OK - Unit %u Register %u = %u\n",
@@ -266,7 +254,7 @@ bool writeHoldingRegister(
 
 bool readRegister(
     uint8_t unitId,
-    const Victron::RegisterInfo& reg,
+    const RegisterDefinition& reg,
     float& value)
 {
     uint16_t raw;
