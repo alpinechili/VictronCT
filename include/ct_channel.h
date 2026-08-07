@@ -1,20 +1,30 @@
 #pragma once
 
+#include <stdint.h>
+
 class CTChannel
 {
 public:
 
     CTChannel();
 
-    void begin();
+    void begin(uint8_t adcPin);
 
     void update();
 
+    float raw() const;
+    float offset() const;
+    float rms() const;
+    float current() const;
     float power() const;
-
-    void setPower(float watts);
 
 private:
 
+    uint8_t m_adcPin;
+
+    float m_raw;
+    float m_offset;
+    float m_rms;
+    float m_current;
     float m_power;
 };
