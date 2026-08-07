@@ -18,7 +18,7 @@ static unsigned long lastAttempt = 0;
 static bool readScaledRegister(
     uint8_t unitId,
     uint16_t address,
-    float& value);
+    float &value);
 
 bool modbusBegin()
 {
@@ -105,65 +105,99 @@ void modbusLoop()
     uint16_t raw;
     bool ok = true;
 
-    
-
     float value;
 
-    if (readScaledRegister(CERBO_UNIT, 840, value))
+    if (readScaledRegister(
+            CERBO_UNIT,
+            VictronRegisters::BATTERY_VOLTAGE,
+            value))
         victron.batteryVoltage = value;
     else
         ok = false;
 
-    if (readScaledRegister(CERBO_UNIT, 841, value))
+    if (readScaledRegister(
+            CERBO_UNIT,
+            VictronRegisters::BATTERY_CURRENT,
+            value))
         victron.batteryCurrent = value;
     else
         ok = false;
 
-    if (readScaledRegister(CERBO_UNIT, 842, value))
+    if (readScaledRegister(
+            CERBO_UNIT,
+            VictronRegisters::BATTERY_POWER,
+            value))
         victron.batteryPower = value;
     else
         ok = false;
 
-    if (readScaledRegister(CERBO_UNIT, 843, value))
+    if (readScaledRegister(
+            CERBO_UNIT,
+            VictronRegisters::BATTERY_SOC,
+            value))
         victron.batterySOC = value;
     else
         ok = false;
 
-    if (readScaledRegister(CERBO_UNIT, 817, value))
+    if (readScaledRegister(
+            CERBO_UNIT,
+            VictronRegisters::AC_CONSUMPTION_L1,
+            value))
         victron.acConsumptionL1 = value;
     else
         ok = false;
 
-    if (readScaledRegister(CERBO_UNIT, 820, value))
+    if (readScaledRegister(
+            CERBO_UNIT,
+            VictronRegisters::GRID_POWER,
+            value))
         victron.gridPowerL1 = value;
     else
         ok = false;
 
-    if (readScaledRegister(CERBO_UNIT, 808, value))
+    if (readScaledRegister(
+            CERBO_UNIT,
+            VictronRegisters::PV_INVERTER1_POWER,
+            value))
         victron.pvInverter1Power = value;
     else
         ok = false;
 
-    if (readScaledRegister(CERBO_UNIT, 893, value))
+    if (readScaledRegister(
+            CERBO_UNIT,
+            VictronRegisters::PV_INVERTER2_POWER,
+            value))
         victron.pvInverter2Power = value;
     else
         ok = false;
 
-    if (readScaledRegister(CERBO_UNIT, 850, value))
+    victron.pvTotalPower =
+        victron.pvInverter1Power +
+        victron.pvInverter2Power;
+
+    if (readScaledRegister(
+            CERBO_UNIT,
+            VictronRegisters::PV_DC_POWER,
+            value))
         victron.pvDcPower = value;
     else
         ok = false;
 
-    if (readScaledRegister(CERBO_UNIT, 855, value))
+    if (readScaledRegister(
+            CERBO_UNIT,
+            VictronRegisters::CHARGER_POWER,
+            value))
         victron.chargerPower = value;
     else
         ok = false;
+
+    victron.online = ok;
 }
 
 bool readHoldingRegister(
     uint8_t unitId,
     uint16_t address,
-    uint16_t& value)
+    uint16_t &value)
 {
     value = 0;
 
@@ -185,7 +219,7 @@ bool readHoldingRegisters(
     uint8_t unitId,
     uint16_t startAddress,
     uint16_t count,
-    uint16_t* values)
+    uint16_t *values)
 {
     if (!connected)
         return false;
@@ -230,8 +264,8 @@ bool writeHoldingRegister(
 
 bool readRegister(
     uint8_t unitId,
-    const RegisterDefinition& reg,
-    float& value)
+    const RegisterDefinition &reg,
+    float &value)
 {
     uint16_t raw;
 
@@ -249,9 +283,9 @@ bool readRegister(
 bool readScaledRegister(
     uint8_t unitId,
     uint16_t address,
-    float& value)
+    float &value)
 {
-    const RegisterDefinition* reg =
+    const RegisterDefinition *reg =
         VictronRegisters::find(unitId, address);
 
     if (reg == nullptr)
