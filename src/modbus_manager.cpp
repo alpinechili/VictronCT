@@ -198,31 +198,7 @@ bool readHoldingRegisters(
         nullptr,
         unitId);
 
-    if (transaction == 0)
-    {
-        connected = false;
-        victron.online = false;
-        return false;
-    }
-
-    unsigned long start = millis();
-
-    while (mb.isTransaction(transaction))
-    {
-        mb.task();
-
-        if (millis() - start > 1000)
-        {
-            Serial.println("Modbus timeout");
-            connected = false;
-            victron.online = false;
-            return false;
-        }
-
-        delay(1);
-    }
-
-    return true;
+    return modbusWaitForTransaction(transaction);
 }
 
 bool writeHoldingRegister(
@@ -241,7 +217,7 @@ bool writeHoldingRegister(
         unitId);
 
     if (!modbusWaitForTransaction(transaction))
-    return false;
+        return false;
 
     Serial.printf(
         "Modbus write OK - Unit %u Register %u = %u\n",
@@ -268,4 +244,18 @@ bool readRegister(
         value = (float)raw / reg.scale;
 
     return true;
+}
+
+bool readScaledRegister(
+    uint8_t unitId,
+    uint16_t address,
+    float& value)
+{
+    const RegisterDefinition* reg =
+        VictronRegisters::find(unitId, address);
+
+    if (reg == nullptr)
+        return false;
+
+    return readRegister(unitId, *reg, value);
 }

@@ -5,6 +5,7 @@
 #include "developer_registers.h"
 #include "modbus_manager.h"
 #include "register_recorder.h"
+#include "config.h"
 
 //==================================================
 // Globals
@@ -12,11 +13,11 @@
 
 bool probeEnabled = false;
 
-uint8_t probeUnit = Victron::Unit::SYSTEM;
+uint8_t probeUnit = CERBO_UNIT;
 uint16_t probeRegister = 808;
 
 bool watchEnabled = false;
-uint8_t watchUnit = Victron::Unit::SYSTEM;
+uint8_t watchUnit = CERBO_UNIT;
 
 uint16_t watchStartRegister = 800;
 uint16_t watchEndRegister = 900;

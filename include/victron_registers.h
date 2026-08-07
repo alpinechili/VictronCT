@@ -1,102 +1,60 @@
 #pragma once
 
-#include <Arduino.h>
+#include <stdint.h>
 
-namespace Victron
+struct RegisterDefinition
 {
-    struct RegisterInfo
+    uint8_t unit;
+    uint16_t address;
+
+    const char* name;
+    const char* units;
+
+    float scale;
+
+    bool isSigned;
+    bool writable;
+};
+
+namespace VictronRegisters
+{
+    constexpr RegisterDefinition Table[] =
     {
-        uint16_t address;
-        float scale;
-        bool isSigned;
-        const char* name;
-        const char* units;
+        //==================================================
+        // System (Unit 100)
+        //==================================================
+
+        {100, 817, "AC Consumption L1",      "W",  1.0f, false, false},
+        {100, 820, "Grid Power",             "W",  1.0f, true,  false},
+
+        {100, 840, "Battery Voltage",        "V", 10.0f, false, false},
+        {100, 841, "Battery Current",        "A", 10.0f, true,  false},
+        {100, 842, "Battery Power",          "W",  1.0f, true,  false},
+        {100, 843, "Battery SOC",            "%",  1.0f, false, false},
+
+        {100, 808, "PV Inverter 1 Power",    "W",  1.0f, false, false},
+        {100, 893, "PV Inverter 2 Power",    "W",  1.0f, false, false},
+
+        {100, 850, "PV DC Power",            "W",  1.0f, false, false},
+        {100, 855, "Charger Power",          "W",  1.0f, false, false},
     };
 
-    namespace Unit
+    constexpr uint16_t Count =
+        sizeof(Table) / sizeof(Table[0]);
+
+    inline const RegisterDefinition* find(
+        uint8_t unit,
+        uint16_t address)
     {
-        constexpr uint8_t SYSTEM  = 100;
-        constexpr uint8_t BATTERY = 225;
-        constexpr uint8_t VEBUS   = 227;
-        constexpr uint8_t PV1     = 34;
-        constexpr uint8_t PV2     = 35;
-    }
-
-    namespace System
-    {
-        constexpr RegisterInfo BatteryVoltage =
+        for (uint16_t i = 0; i < Count; i++)
         {
-            840,
-            100.0f,
-            false,
-            "Battery Voltage",
-            "V"
-        };
+            if (Table[i].unit == unit &&
+                Table[i].address == address)
+            {
+                return &Table[i];
+            }
+        }
 
-        constexpr RegisterInfo BatteryCurrent =
-        {
-            841,
-            10.0f,
-            true,
-            "Battery Current",
-            "A"
-        };
-
-        constexpr RegisterInfo BatteryPower =
-        {
-            842,
-            1.0f,
-            true,
-            "Battery Power",
-            "W"
-        };
-
-        constexpr RegisterInfo BatterySOC =
-        {
-            843,
-            1.0f,
-            false,
-            "Battery SOC",
-            "%"
-        };
-    }
-
-    namespace Battery
-    {
-        constexpr RegisterInfo Voltage =
-        {
-            259,
-            100.0f,
-            false,
-            "Battery Voltage",
-            "V"
-        };
-
-        constexpr RegisterInfo Current =
-        {
-            261,
-            10.0f,
-            true,
-            "Battery Current",
-            "A"
-        };
-
-        constexpr RegisterInfo Power =
-        {
-            260,
-            1.0f,
-            true,
-            "Battery Power",
-            "W"
-        };
-
-        constexpr RegisterInfo SOC =
-        {
-            266,
-            10.0f,
-            false,
-            "Battery SOC",
-            "%"
-        };
+        return nullptr;
     }
 }

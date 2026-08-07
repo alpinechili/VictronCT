@@ -26,7 +26,7 @@ bool readHoldingRegisters(
 
 bool readRegister(
     uint8_t unitId,
-    const Victron::RegisterInfo& reg,
+    const RegisterDefinition& reg,
     float& value);
 
 //--------------------------------------------------
