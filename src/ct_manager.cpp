@@ -2,35 +2,59 @@
 
 #include <Arduino.h>
 
-#include "config.h"
+static bool enabled = false;
 
-void ctManagerBegin()
+static float importPower = 0.0f;
+static float exportPower = 0.0f;
+static float netPower = 0.0f;
+
+bool ctManagerBegin()
 {
-    Serial.println();
-    Serial.println("CT Manager");
+    enabled = false;
 
-    if (!ENABLE_CT_MANAGER)
-    {
-        Serial.println("  Status : Disabled");
-        return;
-    }
+    importPower = 0.0f;
+    exportPower = 0.0f;
+    netPower = 0.0f;
 
-    Serial.println("  Status : Enabled");
-
-    // Future:
-    // Initialise ADC
-    // Load calibration
-    // Configure channels
+    return true;
 }
 
 void ctManagerLoop()
 {
-    if (!ENABLE_CT_MANAGER)
+    if (!enabled)
         return;
 
-    // Future:
-    // Read CT channels
-    // Calculate RMS current
-    // Calculate power
-    // Publish MQTT
+    //==================================================
+    // Placeholder
+    //==================================================
+
+    importPower = 0.0f;
+    exportPower = 0.0f;
+
+    netPower = importPower - exportPower;
+}
+
+bool ctManagerEnabled()
+{
+    return enabled;
+}
+
+void ctManagerEnable(bool state)
+{
+    enabled = state;
+}
+
+float ctImportPower()
+{
+    return importPower;
+}
+
+float ctExportPower()
+{
+    return exportPower;
+}
+
+float ctNetPower()
+{
+    return netPower;
 }
