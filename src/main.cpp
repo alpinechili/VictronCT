@@ -3,6 +3,7 @@
 #include "config.h"
 
 #include "ct_manager.h"
+#include "ct_mqtt.h"
 #include "modbus_manager.h"
 #include "mqtt_manager.h"
 #include "ota_manager.h"
@@ -34,6 +35,8 @@ void setup()
     webBegin();
 
     mqttBegin();
+    ctMqttBegin();
+
     modbusBegin();
 
     if (ENABLE_CT_MANAGER)
@@ -63,7 +66,10 @@ void loop()
     webLoop();
 
     if (ENABLE_MQTT)
+    {
         mqttLoop();
+        ctMqttLoop();
+    }
 
     if (ENABLE_MODBUS)
         modbusLoop();

@@ -31,15 +31,15 @@ static void sendStatusJson()
     json += ",";
 
     json += "\"soc\":";
-    json += String(victron.batterySOC,0);
+    json += String(victron.batterySOC, 0);
     json += ",";
 
     json += "\"voltage\":";
-    json += String(victron.batteryVoltage,1);
+    json += String(victron.batteryVoltage, 1);
     json += ",";
 
     json += "\"current\":";
-    json += String(victron.batteryCurrent,1);
+    json += String(victron.batteryCurrent, 1);
     json += ",";
 
     json += "\"grid\":";
@@ -54,16 +54,48 @@ static void sendStatusJson()
     json += String(victron.pvTotalPower);
     json += ",";
 
+    //==================================================
+    // CT Values
+    //==================================================
+
+    json += "\"ct1\":";
+    json += String(victron.ct1Power, 2);
+    json += ",";
+
+    json += "\"ct2\":";
+    json += String(victron.ct2Power, 2);
+    json += ",";
+
+    json += "\"ct3\":";
+    json += String(victron.ct3Power, 2);
+    json += ",";
+
+    json += "\"ct4\":";
+    json += String(victron.ct4Power, 2);
+    json += ",";
+
+    json += "\"ct_import\":";
+    json += String(victron.ctImportPower, 2);
+    json += ",";
+
+    json += "\"ct_export\":";
+    json += String(victron.ctExportPower, 2);
+    json += ",";
+
+    json += "\"ct_net\":";
+    json += String(victron.ctNetPower, 2);
+    json += ",";
+
     json += "\"heap\":";
-    json += String(ESP.getFreeHeap()/1024);
+    json += String(ESP.getFreeHeap() / 1024);
     json += ",";
 
     json += "\"uptime\":";
-    json += String(millis()/1000);
+    json += String(millis() / 1000);
 
     json += "}";
 
-    server.send(200,"application/json",json);
+    server.send(200, "application/json", json);
 }
 
 static String html()
@@ -74,99 +106,62 @@ static String html()
 <!DOCTYPE html>
 <html>
 <head>
-
 <meta charset="utf-8">
-<meta http-equiv="refresh" content="5">
-
 <title>VictronCT</title>
-
 <style>
-
-body{
-    background:#222;
-    color:#eee;
-    font-family:Arial;
-    margin:20px;
-}
-
-h2{
-    color:#4fc3f7;
-}
-
-nav{
-    margin-bottom:20px;
-}
-
-nav a{
-    color:white;
-    padding:8px 12px;
-    text-decoration:none;
-    background:#444;
-    margin-right:5px;
-}
-
-table{
-    border-collapse:collapse;
-}
-
-td{
-    padding:6px 12px;
-    border-bottom:1px solid #444;
-}
-
-button{
-    margin-top:20px;
-    padding:8px 14px;
-}
-
+body{font-family:Arial;background:#202124;color:white;margin:20px;}
+table{border-collapse:collapse;}
+td{padding:6px 12px;border-bottom:1px solid #444;}
+a{color:#4FC3F7;}
 </style>
-
 </head>
-
 <body>
 
-<h2>VictronCT Gateway</h2>
+<h2>VictronCT Status</h2>
 
-<nav>
-
-<a href="/">Status</a>
-
-<a href="/api/status">JSON</a>
-
+<p>
+<a href="/api/status">JSON</a> |
 <a href="/restart">Restart</a>
-
-</nav>
+</p>
 
 <table>
 )rawliteral";
 
-    page += "<tr><td>Firmware</td><td>"+String(PROJECT_VERSION)+"</td></tr>";
-    page += "<tr><td>IP Address</td><td>"+WiFi.localIP().toString()+"</td></tr>";
-    page += "<tr><td>RSSI</td><td>"+String(WiFi.RSSI())+" dBm</td></tr>";
-    page += "<tr><td>Modbus</td><td>"+String(modbusConnected()?"Connected":"Disconnected")+"</td></tr>";
+    page += "<tr><td>Firmware</td><td>" + String(PROJECT_VERSION) + "</td></tr>";
+    page += "<tr><td>IP Address</td><td>" + WiFi.localIP().toString() + "</td></tr>";
+    page += "<tr><td>RSSI</td><td>" + String(WiFi.RSSI()) + " dBm</td></tr>";
+    page += "<tr><td>Modbus</td><td>" + String(modbusConnected() ? "Connected" : "Disconnected") + "</td></tr>";
 
-    page += "<tr><td>Battery SOC</td><td>"+String(victron.batterySOC,0)+" %</td></tr>";
-    page += "<tr><td>Battery Voltage</td><td>"+String(victron.batteryVoltage,1)+" V</td></tr>";
-    page += "<tr><td>Battery Current</td><td>"+String(victron.batteryCurrent,1)+" A</td></tr>";
+    page += "<tr><td>Battery SOC</td><td>" + String(victron.batterySOC,0) + " %</td></tr>";
+    page += "<tr><td>Battery Voltage</td><td>" + String(victron.batteryVoltage,1) + " V</td></tr>";
+    page += "<tr><td>Battery Current</td><td>" + String(victron.batteryCurrent,1) + " A</td></tr>";
 
-    page += "<tr><td>Grid Power</td><td>"+String(victron.gridPowerL1)+" W</td></tr>";
-    page += "<tr><td>House Load</td><td>"+String(victron.acConsumptionL1)+" W</td></tr>";
-    page += "<tr><td>PV Power</td><td>"+String(victron.pvTotalPower)+" W</td></tr>";
+    page += "<tr><td>Grid Power</td><td>" + String(victron.gridPowerL1) + " W</td></tr>";
+    page += "<tr><td>House Load</td><td>" + String(victron.acConsumptionL1) + " W</td></tr>";
+    page += "<tr><td>PV Power</td><td>" + String(victron.pvTotalPower) + " W</td></tr>";
 
-    page += "<tr><td>Heap</td><td>"+String(ESP.getFreeHeap()/1024)+" KB</td></tr>";
-    page += "<tr><td>Uptime</td><td>"+String(millis()/1000)+" sec</td></tr>";
+    page += "<tr><td colspan='2'><hr></td></tr>";
+    page += "<tr><td><b>CT Sensors</b></td><td></td></tr>";
+
+    page += "<tr><td>CT1</td><td>" + String(victron.ct1Power,2) + "</td></tr>";
+    page += "<tr><td>CT2</td><td>" + String(victron.ct2Power,2) + "</td></tr>";
+    page += "<tr><td>CT3</td><td>" + String(victron.ct3Power,2) + "</td></tr>";
+    page += "<tr><td>CT4</td><td>" + String(victron.ct4Power,2) + "</td></tr>";
+
+    page += "<tr><td>CT Import</td><td>" + String(victron.ctImportPower,2) + "</td></tr>";
+    page += "<tr><td>CT Export</td><td>" + String(victron.ctExportPower,2) + "</td></tr>";
+    page += "<tr><td>CT Net</td><td>" + String(victron.ctNetPower,2) + "</td></tr>";
+
+    page += "<tr><td colspan='2'><hr></td></tr>";
+
+    page += "<tr><td>Heap</td><td>" + String(ESP.getFreeHeap()/1024) + " KB</td></tr>";
+    page += "<tr><td>Uptime</td><td>" + String(millis()/1000) + " sec</td></tr>";
 
     page += "</table>";
 
     page += R"rawliteral(
-
-<button onclick="location.href='/restart'">
-Restart ESP32
-</button>
-
 </body>
 </html>
-
 )rawliteral";
 
     return page;
@@ -174,31 +169,31 @@ Restart ESP32
 
 void webBegin()
 {
-    server.on("/",HTTP_GET,[]()
+    server.on("/", HTTP_GET, []()
     {
-        server.send(200,"text/html",html());
+        server.send(200, "text/html", html());
     });
 
-    server.on("/api/status",HTTP_GET,[]()
+    server.on("/api/status", HTTP_GET, []()
     {
         sendStatusJson();
     });
 
-    server.on("/restart",HTTP_GET,[]()
+    server.on("/restart", HTTP_GET, []()
     {
-        server.send(200,"text/plain","Restarting...");
+        server.send(200, "text/plain", "Restarting...");
         delay(1000);
         ESP.restart();
     });
 
-    server.on("/favicon.ico",HTTP_GET,[]()
+    server.on("/favicon.ico", HTTP_GET, []()
     {
         server.send(204);
     });
 
     server.onNotFound([]()
     {
-        server.send(404,"text/plain","404");
+        server.send(404, "text/plain", "404");
     });
 
     server.begin();
