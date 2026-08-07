@@ -1,6 +1,7 @@
 #include "ct_channel.h"
 
 #include <Arduino.h>
+#include <math.h>
 
 CTChannel::CTChannel()
 {
@@ -23,18 +24,34 @@ void CTChannel::begin(uint8_t adcPin)
 
 void CTChannel::update()
 {
-    m_raw = analogRead(m_adcPin);
+    constexpr uint16_t SAMPLE_COUNT = 400;
 
-    float sample = m_raw - m_offset;
+    double sumSquares = 0.0;
 
-    m_offset =
-        (m_offset * 0.999f) +
-        (m_raw * 0.001f);
+    for (uint16_t i = 0; i < SAMPLE_COUNT; i++)
+    {
+        m_raw = analogRead(m_adcPin);
 
-    m_rms = sample;
+        // Slowly track the ADC midpoint
+        m_offset =
+            (m_offset * 0.999f) +
+            (m_raw * 0.001f);
 
+        float sample = m_raw - m_offset;
+
+        sumSquares += sample * sample;
+    }
+
+    m_rms = sqrt(sumSquares / SAMPLE_COUNT);
+
+    //
+    // Calibration will be added next
+    //
     m_current = 0.0f;
 
+    //
+    // Real power calculation will be added later
+    //
     m_power = 0.0f;
 }
 
