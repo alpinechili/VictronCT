@@ -47,15 +47,27 @@ void ctManagerLoop()
     if (!enabled)
         return;
 
-    if (millis() - lastUpdate < 500)
+    if (millis() - lastUpdate < 5000)
         return;
 
     lastUpdate = millis();
+
+    //--------------------------------------------------
+    // Measure CT sampling time
+    //--------------------------------------------------
+
+    unsigned long start = millis();
 
     double ch1 = ct.power_sample(0);
     double ch2 = ct.power_sample(1);
     double ch3 = ct.power_sample(2);
     double ch4 = ct.power_sample(3);
+
+    unsigned long elapsed = millis() - start;
+
+    //--------------------------------------------------
+    // Store values
+    //--------------------------------------------------
 
     victron.ct1Power = ch1;
     victron.ct2Power = ch2;
@@ -69,6 +81,14 @@ void ctManagerLoop()
     victron.ctImportPower = importPower;
     victron.ctExportPower = exportPower;
     victron.ctNetPower = netPower;
+
+    //--------------------------------------------------
+    // Debug output
+    //--------------------------------------------------
+
+    Serial.printf(
+        "CT sampling: %lu ms\n",
+        elapsed);
 
     Serial.printf(
         "CT1 %8.2f  CT2 %8.2f  CT3 %8.2f  CT4 %8.2f\n",
