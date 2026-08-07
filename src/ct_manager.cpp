@@ -2,14 +2,23 @@
 
 #include <Arduino.h>
 
-#include "ct_channel.h"
+#include "ESP32_4CH_CT.h"
+#include "victron_data.h"
 
 static bool enabled = false;
 
-static CTChannel ct1;
-static CTChannel ct2;
-static CTChannel ct3;
-static CTChannel ct4;
+//==================================================
+// Mottram CT Library
+//==================================================
+
+static ESP32_4CH_CT ct(
+    34,
+    35,
+    36,
+    39,
+    400,
+    20,
+    1500.0);
 
 static float importPower = 0.0f;
 static float exportPower = 0.0f;
@@ -23,16 +32,10 @@ bool ctManagerBegin()
     exportPower = 0.0f;
     netPower = 0.0f;
 
-    //==================================================
-    // Mottram Labs ESP32 4 Channel Power Sensor
-    //==================================================
-
-    ct1.begin(34, 1.0f, 230.0f);
-    ct2.begin(35, 1.0f, 230.0f);
-    ct3.begin(36, 1.0f, 230.0f);
-    ct4.begin(39, 1.0f, 230.0f);
-
+    Serial.println();
     Serial.println("CT Manager Ready");
+
+    ct.report();
 
     return true;
 }
@@ -49,22 +52,30 @@ void ctManagerLoop()
 
     lastUpdate = millis();
 
-    ct1.update();
-    ct2.update();
-    ct3.update();
-    ct4.update();
+    double ch1 = ct.power_sample(0);
+    double ch2 = ct.power_sample(1);
+    double ch3 = ct.power_sample(2);
+    double ch4 = ct.power_sample(3);
 
-    importPower = ct1.power();
+    victron.ct1Power = ch1;
+    victron.ct2Power = ch2;
+    victron.ct3Power = ch3;
+    victron.ct4Power = ch4;
+
+    importPower = ch1;
     exportPower = 0.0f;
-
     netPower = importPower - exportPower;
 
+    victron.ctImportPower = importPower;
+    victron.ctExportPower = exportPower;
+    victron.ctNetPower = netPower;
+
     Serial.printf(
-        "CT1 %.1fW  CT2 %.1fW  CT3 %.1fW  CT4 %.1fW\n",
-        ct1.power(),
-        ct2.power(),
-        ct3.power(),
-        ct4.power());
+        "CT1 %8.2f  CT2 %8.2f  CT3 %8.2f  CT4 %8.2f\n",
+        victron.ct1Power,
+        victron.ct2Power,
+        victron.ct3Power,
+        victron.ct4Power);
 }
 
 bool ctManagerEnabled()

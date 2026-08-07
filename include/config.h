@@ -16,7 +16,7 @@ constexpr char PROJECT_VERSION[] = "2.0.1";
 constexpr bool ENABLE_MODBUS             = true;
 constexpr bool ENABLE_MQTT               = true;
 constexpr bool ENABLE_REGISTER_SCANNER   = true;
-constexpr bool ENABLE_CT_MANAGER         = false;
+constexpr bool ENABLE_CT_MANAGER         = true;
 constexpr bool ENABLE_REGISTER_POLLER    = true;
 
 constexpr bool ENABLE_LOGGING            = true;

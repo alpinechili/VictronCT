@@ -1,6 +1,8 @@
 #include <Arduino.h>
 
 #include "config.h"
+
+#include "ct_manager.h"
 #include "modbus_manager.h"
 #include "mqtt_manager.h"
 #include "ota_manager.h"
@@ -11,8 +13,8 @@
 #include "register_scanner.h"
 #include "register_watch.h"
 #include "serial_commands.h"
-#include "wifi_manager.h"
 #include "web_manager.h"
+#include "wifi_manager.h"
 
 void setup()
 {
@@ -33,6 +35,9 @@ void setup()
 
     mqttBegin();
     modbusBegin();
+
+    if (ENABLE_CT_MANAGER)
+        ctManagerBegin();
 
     registerMqttBegin();
 
@@ -62,6 +67,9 @@ void loop()
 
     if (ENABLE_MODBUS)
         modbusLoop();
+
+    if (ENABLE_CT_MANAGER)
+        ctManagerLoop();
 
     registerMqttLoop();
 
