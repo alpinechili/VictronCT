@@ -129,41 +129,35 @@ void modbusLoop()
     else
         ok = false;
 
-    if (readHoldingRegister(CERBO_UNIT, 817, raw))
-        victron.acConsumptionL1 = raw;
+    if (readScaledRegister(CERBO_UNIT, 817, value))
+        victron.acConsumptionL1 = value;
     else
         ok = false;
 
-    if (readHoldingRegister(CERBO_UNIT, 820, raw))
-        victron.gridPowerL1 = (int16_t)raw;
+    if (readScaledRegister(CERBO_UNIT, 820, value))
+        victron.gridPowerL1 = value;
     else
         ok = false;
 
-    if (readHoldingRegister(CERBO_UNIT, 808, raw))
-        victron.pvInverter1Power = raw;
+    if (readScaledRegister(CERBO_UNIT, 808, value))
+        victron.pvInverter1Power = value;
     else
         ok = false;
 
-    if (readHoldingRegister(CERBO_UNIT, 893, raw))
-        victron.pvInverter2Power = raw;
+    if (readScaledRegister(CERBO_UNIT, 893, value))
+        victron.pvInverter2Power = value;
     else
         ok = false;
 
-    victron.pvTotalPower =
-        victron.pvInverter1Power +
-        victron.pvInverter2Power;
-
-    if (readHoldingRegister(CERBO_UNIT, 850, raw))
-        victron.pvDcPower = raw;
+    if (readScaledRegister(CERBO_UNIT, 850, value))
+        victron.pvDcPower = value;
     else
         ok = false;
 
-    if (readHoldingRegister(CERBO_UNIT, 855, raw))
-        victron.chargerPower = raw;
+    if (readScaledRegister(CERBO_UNIT, 855, value))
+        victron.chargerPower = value;
     else
         ok = false;
-
-    victron.online = ok;
 }
 
 bool readHoldingRegister(
