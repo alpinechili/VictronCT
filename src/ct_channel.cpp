@@ -7,6 +7,9 @@ CTChannel::CTChannel()
 {
     m_adcPin = 0;
 
+    m_calibration = 1.0f;
+    m_mainsVoltage = 230.0f;
+
     m_raw = 0.0f;
     m_offset = 2048.0f;
 
@@ -15,9 +18,15 @@ CTChannel::CTChannel()
     m_power = 0.0f;
 }
 
-void CTChannel::begin(uint8_t adcPin)
+void CTChannel::begin(
+    uint8_t adcPin,
+    float calibration,
+    float mainsVoltage)
 {
     m_adcPin = adcPin;
+
+    m_calibration = calibration;
+    m_mainsVoltage = mainsVoltage;
 
     pinMode(m_adcPin, INPUT);
 }
@@ -44,15 +53,11 @@ void CTChannel::update()
 
     m_rms = sqrt(sumSquares / SAMPLE_COUNT);
 
-    //
-    // Calibration will be added next
-    //
-    m_current = 0.0f;
+    // Convert ADC RMS into current
+    m_current = m_rms * m_calibration;
 
-    //
-    // Real power calculation will be added later
-    //
-    m_power = 0.0f;
+    // Calculate apparent power
+    m_power = m_current * m_mainsVoltage;
 }
 
 float CTChannel::raw() const
