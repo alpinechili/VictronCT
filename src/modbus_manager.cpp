@@ -48,7 +48,9 @@ static bool modbusWaitForTransaction(uint16_t transaction)
 
         if (millis() - start > 1000)
         {
-            Serial.println("Modbus timeout");
+            Serial.printf(
+                "Modbus timeout (tx=%u)\n",
+                transaction);
 
             connected = false;
             victron.online = false;
@@ -57,6 +59,7 @@ static bool modbusWaitForTransaction(uint16_t transaction)
         }
 
         delay(1);
+        yield();
     }
 
     return true;
@@ -75,7 +78,7 @@ void modbusLoop()
 
     if (!connected)
     {
-        if (millis() - lastAttempt < 5000)
+        if (millis() - lastAttempt < 1000)
             return;
 
         lastAttempt = millis();
@@ -192,6 +195,11 @@ void modbusLoop()
         ok = false;
 
     victron.online = ok;
+
+    if (!ok)
+    {
+        Serial.println("Read cycle failed");
+    }
 }
 
 bool readHoldingRegister(
@@ -212,7 +220,17 @@ bool readHoldingRegister(
         nullptr,
         unitId);
 
-    return modbusWaitForTransaction(transaction);
+    bool result = modbusWaitForTransaction(transaction);
+
+    if (!result)
+    {
+        Serial.printf(
+            "Read failed: Unit=%u Register=%u\n",
+            unitId,
+            address);
+    }
+
+    return result;
 }
 
 bool readHoldingRegisters(
@@ -291,5 +309,15 @@ bool readScaledRegister(
     if (reg == nullptr)
         return false;
 
-    return readRegister(unitId, *reg, value);
+    bool ok = readRegister(unitId, *reg, value);
+
+    if (!ok)
+    {
+        Serial.printf(
+            "Read failed: Unit=%u Register=%u\n",
+            unitId,
+            address);
+    }
+
+    return ok;
 }

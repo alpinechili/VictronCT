@@ -16,9 +16,9 @@ static ESP32_4CH_CT ct(
     35,
     36,
     39,
-    400,
-    20,
-    1500.0);
+    200,
+    10,
+    1500.0f);
 
 static float importPower = 0.0f;
 static float exportPower = 0.0f;
@@ -43,38 +43,40 @@ bool ctManagerBegin()
 void ctManagerLoop()
 {
     static unsigned long lastUpdate = 0;
+    static uint8_t currentChannel = 0;
 
     if (!enabled)
         return;
 
-    if (millis() - lastUpdate < 5000)
+    if (millis() - lastUpdate < 500)
         return;
 
     lastUpdate = millis();
 
-    //--------------------------------------------------
-    // Measure CT sampling time
-    //--------------------------------------------------
-
     unsigned long start = millis();
 
-    double ch1 = ct.power_sample(0);
-    double ch2 = ct.power_sample(1);
-    double ch3 = ct.power_sample(2);
-    double ch4 = ct.power_sample(3);
+    switch (currentChannel)
+    {
+        case 0:
+            victron.ct1Power = ct.power_sample(0);
+            break;
 
-    unsigned long elapsed = millis() - start;
+        case 1:
+            victron.ct2Power = ct.power_sample(1);
+            break;
 
-    //--------------------------------------------------
-    // Store values
-    //--------------------------------------------------
+        case 2:
+            victron.ct3Power = ct.power_sample(2);
+            break;
 
-    victron.ct1Power = ch1;
-    victron.ct2Power = ch2;
-    victron.ct3Power = ch3;
-    victron.ct4Power = ch4;
+        case 3:
+            victron.ct4Power = ct.power_sample(3);
+            break;
+    }
 
-    importPower = ch1;
+    currentChannel = (currentChannel + 1) & 3;
+
+    importPower = victron.ct1Power;
     exportPower = 0.0f;
     netPower = importPower - exportPower;
 
@@ -82,13 +84,10 @@ void ctManagerLoop()
     victron.ctExportPower = exportPower;
     victron.ctNetPower = netPower;
 
-    //--------------------------------------------------
-    // Debug output
-    //--------------------------------------------------
-
     Serial.printf(
-        "CT sampling: %lu ms\n",
-        elapsed);
+        "CT sampling: %lu ms  CH:%u\n",
+        millis() - start,
+        currentChannel);
 
     Serial.printf(
         "CT1 %8.2f  CT2 %8.2f  CT3 %8.2f  CT4 %8.2f\n",
